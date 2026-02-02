@@ -1,0 +1,9 @@
+{
+  "name": "nimbus-erp-prototype",
+  "version": "1.0.0",
+  "description": "ERP Nimbus Clickable Prototype",
+  "scripts": {
+    "start": "npx serve prototype",
+    "build": "echo 'Static site - no build needed'"
+  }
+}
