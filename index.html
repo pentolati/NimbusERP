@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERP Nimbus - Prototype v1.0</title>
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/forms.css">
+    <link rel="stylesheet" href="css/tables.css?v=2">
+    <link rel="stylesheet" href="css/modals.css">
+</head>
+<body class="light-mode">
+    <!-- APP CONTAINER - PRD Section D.1.1 -->
+    <div class="app-container">
+        <!-- SIDEBAR - PRD Section D.1.2 -->
+        <aside class="sidebar" id="sidebar">
+            <!-- Logo Section - PRD D.1.2 -->
+            <div class="sidebar-logo">
+                <h1>ERP Nimbus</h1>
+                <span class="version">Prototype v1.0</span>
+            </div>
+
+            <!-- Navigation - PRD Section D.1.3 -->
+            <nav class="sidebar-nav">
+                <!-- Section: Dashboard -->
+                <div class="nav-section">
+                    <span class="nav-section-title">Dashboard</span>
+                    <a href="#" class="nav-item active" data-page="dashboard">
+                        <span class="nav-icon">&#9632;</span>
+                        Dashboard
+                    </a>
+                </div>
+
+                <!-- Section: Master Data -->
+                <div class="nav-section">
+                    <span class="nav-section-title">Master Data</span>
+                    <a href="#" class="nav-item" data-page="warehouse-list">
+                        <span class="nav-icon">&#127970;</span>
+                        Warehouse
+                    </a>
+                    <a href="#" class="nav-item" data-page="supplier-list">
+                        <span class="nav-icon">&#128101;</span>
+                        Supplier
+                    </a>
+                    <a href="#" class="nav-item" data-page="item-list">
+                        <span class="nav-icon">&#128230;</span>
+                        Item
+                    </a>
+                    <a href="#" class="nav-item" data-page="uom-list">
+                        <span class="nav-icon">&#128207;</span>
+                        UOM
+                    </a>
+                    <a href="#" class="nav-item" data-page="inventory-list">
+                        <span class="nav-icon">&#128451;</span>
+                        Inventory
+                    </a>
+                </div>
+
+                <!-- Section: Procurement -->
+                <div class="nav-section">
+                    <span class="nav-section-title">Procurement</span>
+                    <a href="#" class="nav-item" data-page="po-list">
+                        <span class="nav-icon">&#128196;</span>
+                        Purchase Order
+                    </a>
+                </div>
+
+                <!-- Section: Settings - PRD U.17, W -->
+                <div class="nav-section">
+                    <span class="nav-section-title">Settings</span>
+                    <a href="#" class="nav-item" data-page="user-list">
+                        <span class="nav-icon">&#128100;</span>
+                        User Management
+                    </a>
+                    <a href="#" class="nav-item" data-page="functional-role-list">
+                        <span class="nav-icon">&#128272;</span>
+                        Functional Roles
+                    </a>
+                    <a href="#" class="nav-item" data-page="document-status-list">
+                        <span class="nav-icon">&#128203;</span>
+                        Document Status
+                    </a>
+                    <a href="#" class="nav-item" data-page="workflow-list">
+                        <span class="nav-icon">&#8644;</span>
+                        Workflow Transitions
+                    </a>
+                </div>
+            </nav>
+
+            <!-- Theme Toggle - PRD D.1.2 -->
+            <div class="sidebar-footer">
+                <button class="theme-toggle" id="themeToggle">
+                    <span class="theme-icon-light">&#9728;</span>
+                    <span class="theme-icon-dark">&#9790;</span>
+                    <span class="theme-label">Toggle Theme</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT - PRD Section D.1.1 -->
+        <main class="main-content" id="mainContent">
+            <!-- Pages will be loaded here -->
+        </main>
+    </div>
+
+    <!-- TOAST CONTAINER - PRD Section D.4 -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- VALIDATION POPUP MODAL - PRD Section D.5 -->
+    <div class="modal-overlay" id="validationModal">
+        <div class="modal modal-sm validation-modal">
+            <div class="modal-header modal-header-error">
+                <h3>&#9888; Validation Error</h3>
+                <button class="modal-close" onclick="closeValidationModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="validationMessage"></p>
+            </div>
+            <div class="modal-footer modal-footer-center">
+                <button class="btn btn-primary" onclick="closeValidationModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONFIRMATION MODAL - PRD B-FR-033a -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3>Confirm</h3>
+                <button class="modal-close" onclick="closeConfirmModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeConfirmModal()">No</button>
+                <button class="btn btn-primary" id="confirmYesBtn">Yes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/data.js?v=4"></script>
+    <script src="js/utils.js?v=2"></script>
+    <script src="js/workflow.js?v=4"></script>
+    <script src="js/user.js?v=3"></script>
+    <script src="js/dashboard.js?v=2"></script>
+    <script src="js/warehouse.js?v=2"></script>
+    <script src="js/supplier.js?v=2"></script>
+    <script src="js/item.js?v=2"></script>
+    <script src="js/uom.js?v=2"></script>
+    <script src="js/inventory.js?v=2"></script>
+    <script src="js/po.js?v=8"></script>
+    <script src="js/navigation.js?v=3"></script>
+    <script src="js/app.js?v=2"></script>
+</body>
+</html>
