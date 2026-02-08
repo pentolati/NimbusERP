@@ -1,0 +1,426 @@
+/* ===========================================
+   ERP Nimbus - Layout Styles
+   Based on PRD Section D.1 Application Layout
+   =========================================== */
+
+/* App Container - PRD D.1.1 */
+.app-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar - PRD C.8.1, D.1.2 */
+.sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--bg-surface);
+    border-right: 1px solid var(--border-default);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 100;
+}
+
+/* Sidebar Logo - PRD D.1.2 */
+.sidebar-logo {
+    padding: var(--space-5);
+    border-bottom: 1px solid var(--border-default);
+}
+
+.sidebar-logo h1 {
+    font-size: var(--text-xl);
+    color: var(--primary);
+    margin-bottom: var(--space-1);
+}
+
+.sidebar-logo .version {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+}
+
+/* Sidebar Navigation - PRD D.1.3 */
+.sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-4) 0;
+}
+
+.nav-section {
+    margin-bottom: var(--space-4);
+}
+
+/* Section titles are non-clickable labels - PRD D-NAV-003 */
+.nav-section-title {
+    display: block;
+    padding: var(--space-2) var(--space-5);
+    font-size: var(--text-xs);
+    font-weight: var(--font-semibold);
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-5);
+    color: var(--text-secondary);
+    font-size: var(--text-base);
+    font-weight: var(--font-medium);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+.nav-item:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+/* Only one nav item active at a time - PRD D-NAV-002 */
+.nav-item.active {
+    background-color: var(--bg-selected);
+    color: var(--primary);
+    font-weight: var(--font-semibold);
+}
+
+.nav-icon {
+    font-size: var(--text-lg);
+    width: 20px;
+    text-align: center;
+}
+
+/* Sidebar Footer - Theme Toggle - PRD D.1.2 */
+.sidebar-footer {
+    padding: var(--space-4);
+    border-top: 1px solid var(--border-default);
+}
+
+.theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: 100%;
+    padding: var(--space-3);
+    background: var(--bg-muted);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.theme-toggle:hover {
+    background: var(--bg-hover);
+}
+
+.theme-icon-light,
+.theme-icon-dark {
+    font-size: var(--text-lg);
+}
+
+.light-mode .theme-icon-dark { display: none; }
+.dark-mode .theme-icon-light { display: none; }
+
+/* Main Content - PRD C.8.2, D.1.1 */
+.main-content {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    padding: var(--content-padding);
+    min-height: 100vh;
+    background-color: var(--bg-base);
+}
+
+/* Page Header - PRD D.3.1 */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-6);
+}
+
+.page-title {
+    font-size: var(--text-3xl);
+    font-weight: var(--font-bold);
+    color: var(--text-primary);
+}
+
+.page-actions {
+    display: flex;
+    gap: var(--space-3);
+}
+
+/* Card / Section Container */
+.card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.card-header {
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--border-default);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-body {
+    padding: var(--space-5);
+}
+
+.card-footer {
+    padding: var(--space-4) var(--space-5);
+    border-top: 1px solid var(--border-default);
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+}
+
+/* Slide-over Panel - PRD A.7.1 UI Pattern */
+.slideover-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 200;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-slow);
+}
+
+.slideover-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Right-side Slide-over Form - PRD A.7.1, C.7.6 */
+.slideover {
+    position: fixed;
+    top: 0;
+    right: -420px;
+    width: 420px;
+    height: 100vh;
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-xl);
+    z-index: 201;
+    display: flex;
+    flex-direction: column;
+    transition: right var(--transition-slow);
+}
+
+.slideover-overlay.active .slideover {
+    right: 0;
+}
+
+.slideover-header {
+    padding: var(--space-5);
+    border-bottom: 1px solid var(--border-default);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.slideover-header h3 {
+    font-size: var(--text-xl);
+    font-weight: var(--font-semibold);
+}
+
+.slideover-close {
+    background: none;
+    border: none;
+    font-size: var(--text-2xl);
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: var(--space-1);
+    line-height: 1;
+}
+
+.slideover-close:hover {
+    color: var(--text-primary);
+}
+
+.slideover-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-5);
+}
+
+.slideover-footer {
+    padding: var(--space-4) var(--space-5);
+    border-top: 1px solid var(--border-default);
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+}
+
+/* Toast Container - PRD D.4.1 */
+.toast-container {
+    position: fixed;
+    top: var(--space-6);
+    right: var(--space-6);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+/* Toast - PRD D.4, C.7.7 */
+.toast {
+    min-width: 300px;
+    max-width: 400px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: var(--space-4);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    animation: slideIn 0.3s ease-out;
+    border-left: 4px solid;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Toast Types - PRD D.4.2 */
+.toast-success {
+    border-left-color: var(--success);
+}
+.toast-success .toast-icon {
+    color: var(--success);
+}
+
+.toast-error {
+    border-left-color: var(--error);
+}
+.toast-error .toast-icon {
+    color: var(--error);
+}
+
+.toast-warning {
+    border-left-color: var(--warning);
+}
+.toast-warning .toast-icon {
+    color: var(--warning);
+}
+
+.toast-info {
+    border-left-color: var(--info);
+}
+.toast-info .toast-icon {
+    color: var(--info);
+}
+
+.toast-icon {
+    font-size: var(--text-xl);
+}
+
+.toast-content {
+    flex: 1;
+}
+
+.toast-title {
+    font-weight: var(--font-semibold);
+    margin-bottom: var(--space-1);
+}
+
+.toast-message {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: var(--text-lg);
+    padding: 0;
+    line-height: 1;
+}
+
+.toast-close:hover {
+    color: var(--text-primary);
+}
+
+/* Grid layouts */
+.grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+}
+
+.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+}
+
+.grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-4);
+}
+
+.grid-5 {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: var(--space-4);
+}
+
+/* Flex utilities */
+.flex {
+    display: flex;
+}
+
+.flex-col {
+    flex-direction: column;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.justify-end {
+    justify-content: flex-end;
+}
+
+.gap-2 { gap: var(--space-2); }
+.gap-3 { gap: var(--space-3); }
+.gap-4 { gap: var(--space-4); }
+
+/* Responsive - PRD C.8.3 */
+@media (max-width: 1024px) {
+    .sidebar {
+        width: var(--sidebar-width-tablet);
+    }
+
+    .main-content {
+        margin-left: var(--sidebar-width-tablet);
+    }
+
+    .grid-5 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}

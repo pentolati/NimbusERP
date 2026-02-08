@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERP Nimbus - Entity Relationship Diagram (ERD)</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-light: #EEF2FF;
+            --secondary: #0D9488;
+            --secondary-light: #F0FDFA;
+            --warning: #F59E0B;
+            --warning-light: #FFFBEB;
+            --text-primary: #0F172A;
+            --text-secondary: #334155;
+            --text-tertiary: #64748B;
+            --bg-base: #F8FAFC;
+            --bg-surface: #FFFFFF;
+            --border: #E2E8F0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        header {
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            padding: 24px 0;
+            margin-bottom: 32px;
+        }
+
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .meta {
+            display: flex;
+            gap: 24px;
+            font-size: 14px;
+            color: var(--text-tertiary);
+        }
+
+        .meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .principle-box {
+            background: var(--warning-light);
+            border-left: 4px solid var(--warning);
+            padding: 16px 20px;
+            margin-bottom: 32px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .principle-box strong {
+            color: var(--warning);
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin: 24px 0 12px 0;
+        }
+
+        .section {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .erd-diagram {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 14px;
+        }
+
+        th {
+            background: var(--bg-base);
+            text-align: left;
+            padding: 12px 16px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border);
+        }
+
+        td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        tr:hover {
+            background: var(--bg-base);
+        }
+
+        .entity-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .entity-header {
+            background: var(--primary);
+            color: white;
+            padding: 12px 20px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .entity-header .source {
+            font-size: 12px;
+            opacity: 0.8;
+            font-weight: 400;
+        }
+
+        .entity-body {
+            padding: 16px 20px;
+        }
+
+        .field-row {
+            display: flex;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .field-row:last-child {
+            border-bottom: none;
+        }
+
+        .field-name {
+            width: 200px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .field-type {
+            flex: 1;
+            color: var(--text-secondary);
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+        }
+
+        .field-pk {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .field-fk {
+            color: var(--secondary);
+        }
+
+        .field-nullable {
+            color: var(--text-tertiary);
+            font-style: italic;
+        }
+
+        .note-box {
+            background: var(--secondary-light);
+            border-left: 4px solid var(--secondary);
+            padding: 12px 16px;
+            margin: 12px 0;
+            border-radius: 0 6px 6px 0;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .constraint-badge {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .toc {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .toc h3 {
+            margin-top: 0;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .toc li {
+            padding: 6px 0;
+        }
+
+        .toc a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-tertiary);
+            font-size: 14px;
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>ERP Nimbus - Entity Relationship Diagram</h1>
+            <div class="meta">
+                <span><strong>Version:</strong> 1.0</span>
+                <span><strong>Based on:</strong> PRD V6.1</span>
+                <span><strong>Date:</strong> 02 February 2026</span>
+                <span class="badge">1:1 dengan PRD</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="principle-box">
+            <strong>Principle:</strong> Dokumen ERD ini dibuat 1:1 sesuai dengan PRD Section A.8 & B.8 - Tidak ada asumsi atau tambahan.
+        </div>
+
+        <!-- Table of Contents -->
+        <div class="toc">
+            <h3>Table of Contents</h3>
+            <ul>
+                <li><a href="#erd-diagram">1. ERD Diagram (Visual)</a></li>
+                <li><a href="#entities">2. Entity Definitions</a></li>
+                <li><a href="#field-lengths">3. Field Length Standards</a></li>
+                <li><a href="#data-types">4. General Data Types</a></li>
+                <li><a href="#seed-data">5. Seed Data</a></li>
+                <li><a href="#fk-summary">6. Foreign Key Summary</a></li>
+                <li><a href="#constraints">7. Unique Constraints</a></li>
+            </ul>
+        </div>
+
+        <!-- ERD Diagram -->
+        <section id="erd-diagram">
+            <h2>1. ERD Diagram (Visual)</h2>
+            <div class="erd-diagram">
+                <div class="mermaid">
+erDiagram
+    User {
+        UUID id PK
+        String username
+        String full_name
+        String email
+        Boolean is_active
+        Timestamp created_at
+        Timestamp updated_at
+    }
+
+    Warehouse {
+        UUID id PK
+        String node_id
+        String name
+        UUID parent_id FK
+        Enum node_type
+        Enum method
+        String address
+        Text description
+        Enum status
+        Timestamp created_at
+        UUID created_by FK
+        Timestamp updated_at
+        UUID updated_by FK
+    }
+
+    Supplier {
+        UUID id PK
+        String supp_id
+        String name
+        String pic_name
+        Text address
+        String phone
+        Text description
+        Enum status
+        Timestamp created_at
+        UUID created_by FK
+        Timestamp updated_at
+        UUID updated_by FK
+    }
+
+    UOM {
+        UUID id PK
+        String uom_id
+        String code
+        String name
+        Text description
+        Enum status
+        Timestamp created_at
+        UUID created_by FK
+        Timestamp updated_at
+        UUID updated_by FK
+    }
+
+    Item {
+        UUID id PK
+        String sku
+        String brand
+        String name
+        Text detail
+        UUID uom_id FK
+        Enum status
+        Timestamp created_at
+        UUID created_by FK
+        Timestamp updated_at
+        UUID updated_by FK
+    }
+
+    Inventory {
+        UUID id PK
+        UUID item_id FK
+        UUID warehouse_id FK
+        UUID bin_id FK
+        Decimal qty_on_hand
+        Timestamp last_received_at
+        Decimal last_received_qty
+        UUID last_po_id FK
+        Timestamp created_at
+        Timestamp updated_at
+    }
+
+    PurchaseOrder {
+        UUID id PK
+        String po_id
+        Timestamp po_date
+        UUID supplier_id FK
+        Enum distribution_method
+        UUID warehouse_id FK
+        Text address
+        Date required_date
+        Decimal subtotal
+        Enum tax_option
+        Decimal tax_percentage
+        Decimal tax_amount
+        Enum discount_type
+        Decimal discount_percentage
+        Decimal discount_amount
+        Decimal grand_total
+        Enum payment_method
+        Decimal paid_amount
+        Decimal outstanding
+        Decimal dp_percentage
+        Decimal dp_amount
+        Text notes
+        Date delivery_date
+        Decimal transfer_amount
+        Enum status
+        Boolean is_active
+        Timestamp created_at
+        UUID created_by FK
+        Timestamp updated_at
+        UUID updated_by FK
+    }
+
+    PurchaseOrderLineItem {
+        UUID id PK
+        UUID po_id FK
+        UUID item_id FK
+        Decimal quantity
+        Decimal unit_price
+        Decimal total_amount
+        Integer line_number
+        Timestamp created_at
+        Timestamp updated_at
+    }
+
+    POAttachment {
+        UUID id PK
+        UUID po_id FK
+        String file_path
+        String file_name
+        String file_type
+        Integer file_size
+        Timestamp uploaded_at
+        UUID uploaded_by FK
+    }
+
+    Warehouse ||--o| Warehouse : "parent_id"
+    User ||--o{ Warehouse : "created_by/updated_by"
+    User ||--o{ Supplier : "created_by/updated_by"
+    User ||--o{ UOM : "created_by/updated_by"
+    UOM ||--o{ Item : "uom_id"
+    User ||--o{ Item : "created_by/updated_by"
+    Item ||--o{ Inventory : "item_id"
+    Warehouse ||--o{ Inventory : "warehouse_id/bin_id"
+    PurchaseOrder ||--o| Inventory : "last_po_id"
+    Supplier ||--o{ PurchaseOrder : "supplier_id"
+    Warehouse ||--o{ PurchaseOrder : "warehouse_id"
+    User ||--o{ PurchaseOrder : "created_by/updated_by"
+    PurchaseOrder ||--o{ PurchaseOrderLineItem : "po_id"
+    Item ||--o{ PurchaseOrderLineItem : "item_id"
+    PurchaseOrder ||--o| POAttachment : "po_id"
+    User ||--o{ POAttachment : "uploaded_by"
+                </div>
+            </div>
+        </section>
+
+        <!-- Entity Definitions -->
+        <section id="entities">
+            <h2>2. Entity Definitions (Copy Exact dari PRD)</h2>
+
+            <!-- User -->
+            <div class="entity-card">
+                <div class="entity-header">
+                    <span>User</span>
+                    <span class="source">PRD Section A.8.6</span>
+                </div>
+                <div class="entity-body">
+                    <div class="note-box">
+                        <strong>Note dari PRD:</strong> Full User authentication and management is out of scope for this PRD. This entity definition is provided for foreign key reference purposes only. The system assumes a logged-in user context is available.
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">id <span class="constraint-badge">PK</span></div>
+                        <div class="field-type field-pk">UUID</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">username</div>
+                        <div class="field-type">String</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">full_name</div>
+                        <div class="field-type">String</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">email</div>
+                        <div class="field-type">String</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">is_active</div>
+                        <div class="field-type">Boolean</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">created_at</div>
+                        <div class="field-type">Timestamp</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">updated_at</div>
+                        <div class="field-type">Timestamp</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warehouse -->
+            <div class="entity-card">
+                <div class="entity-header">
+                    <span>Warehouse</span>
+                    <span class="source">PRD Section A.8.1</span>
+                </div>
+                <div class="entity-body">
+                    <div class="field-row">
+                        <div class="field-name">id <span class="constraint-badge">PK</span></div>
+                        <div class="field-type field-pk">UUID</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">node_id</div>
+                        <div class="field-type">String</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">name</div>
+                        <div class="field-type">String</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">parent_id <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Self-Ref, Nullable)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">node_type</div>
+                        <div class="field-type">Enum (Warehouse, Aisle, Rack, Bin)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">method</div>
+                        <div class="field-type">Enum (FIFO, LIFO, FEFO)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">address</div>
+                        <div class="field-type">String</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">description</div>
+                        <div class="field-type field-nullable">Text (Nullable)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">status</div>
+                        <div class="field-type">Enum (Active, Inactive)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">created_at</div>
+                        <div class="field-type">Timestamp</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">created_by <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Foreign Key &rarr; User.id)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">updated_at</div>
+                        <div class="field-type">Timestamp</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">updated_by <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Foreign Key &rarr; User.id)</div>
+                    </div>
+                    <h4 style="margin-top: 16px; color: var(--text-tertiary);">Computed Fields (dari PRD):</h4>
+                    <div class="field-row">
+                        <div class="field-name">full_path</div>
+                        <div class="field-type field-nullable">String - Calculated hierarchy path (e.g., "WH0001 > A0001 > R0001")</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Supplier -->
+            <div class="entity-card">
+                <div class="entity-header">
+                    <span>Supplier</span>
+                    <span class="source">PRD Section A.8.2</span>
+                </div>
+                <div class="entity-body">
+                    <div class="field-row">
+                        <div class="field-name">id <span class="constraint-badge">PK</span></div>
+                        <div class="field-type field-pk">UUID</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">supp_id</div>
+                        <div class="field-type">String</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">name</div>
+                        <div class="field-type">String</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">pic_name</div>
+                        <div class="field-type">String</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">address</div>
+                        <div class="field-type">Text</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">phone</div>
+                        <div class="field-type">String</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">description</div>
+                        <div class="field-type field-nullable">Text (Nullable)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">status</div>
+                        <div class="field-type">Enum (Active, Inactive)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">created_at</div>
+                        <div class="field-type">Timestamp</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">created_by <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Foreign Key &rarr; User.id)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">updated_at</div>
+                        <div class="field-type">Timestamp</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">updated_by <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Foreign Key &rarr; User.id)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UOM -->
+            <div class="entity-card">
+                <div class="entity-header">
+                    <span>UOM (Unit of Measure)</span>
+                    <span class="source">PRD Section A.8.4</span>
+                </div>
+                <div class="entity-body">
+                    <div class="field-row">
+                        <div class="field-name">id <span class="constraint-badge">PK</span></div>
+                        <div class="field-type field-pk">UUID</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">uom_id</div>
+                        <div class="field-type">String</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">code</div>
+                        <div class="field-type">String</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">name</div>
+                        <div class="field-type">String</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">description</div>
+                        <div class="field-type field-nullable">Text (Nullable)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">status</div>
+                        <div class="field-type">Enum (Active, Inactive)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">created_at</div>
+                        <div class="field-type">Timestamp</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">created_by <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Foreign Key &rarr; User.id)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">updated_at</div>
+                        <div class="field-type">Timestamp</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">updated_by <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Foreign Key &rarr; User.id)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Item -->
+            <div class="entity-card">
+                <div class="entity-header">
+                    <span>Item</span>
+                    <span class="source">PRD Section A.8.3</span>
+                </div>
+                <div class="entity-body">
+                    <div class="field-row">
+                        <div class="field-name">id <span class="constraint-badge">PK</span></div>
+                        <div class="field-type field-pk">UUID</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">sku <span class="constraint-badge">UNIQUE</span></div>
+                        <div class="field-type">String (Unique)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">brand</div>
+                        <div class="field-type field-nullable">String (Nullable)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">name</div>
+                        <div class="field-type">String</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">detail</div>
+                        <div class="field-type field-nullable">Text (Nullable)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">uom_id <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Foreign Key &rarr; UOM.id)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">status</div>
+                        <div class="field-type">Enum (Active, Inactive)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">created_at</div>
+                        <div class="field-type">Timestamp</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">created_by <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Foreign Key &rarr; User.id)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">updated_at</div>
+                        <div class="field-type">Timestamp</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">updated_by <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Foreign Key &rarr; User.id)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory -->
+            <div class="entity-card">
+                <div class="entity-header">
+                    <span>Inventory</span>
+                    <span class="source">PRD Section A.8.5</span>
+                </div>
+                <div class="entity-body">
+                    <div class="note-box">
+                        <strong>Unique Constraint:</strong> (item_id, warehouse_id, bin_id)
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">id <span class="constraint-badge">PK</span></div>
+                        <div class="field-type field-pk">UUID</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">item_id <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Foreign Key &rarr; Item.id)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">warehouse_id <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Foreign Key &rarr; Warehouse.id, where node_type='Warehouse')</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">bin_id <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Foreign Key &rarr; Warehouse.id, where node_type='Bin', Nullable)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">qty_on_hand</div>
+                        <div class="field-type">Decimal(18,4)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">last_received_at</div>
+                        <div class="field-type field-nullable">Timestamp (Nullable)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">last_received_qty</div>
+                        <div class="field-type field-nullable">Decimal(18,4) (Nullable)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">last_po_id <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Foreign Key &rarr; PurchaseOrder.id, Nullable)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">created_at</div>
+                        <div class="field-type">Timestamp</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">updated_at</div>
+                        <div class="field-type">Timestamp</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PurchaseOrder -->
+            <div class="entity-card">
+                <div class="entity-header">
+                    <span>PurchaseOrder</span>
+                    <span class="source">PRD Section B.8.1</span>
+                </div>
+                <div class="entity-body">
+                    <div class="note-box">
+                        <strong>Note dari PRD:</strong> delivery_date and transfer_amount are user input fields populated via future payment/delivery tracking features. For MVP Phase 1, these fields default to null/0 and are displayed in PO List view.
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">id <span class="constraint-badge">PK</span></div>
+                        <div class="field-type field-pk">UUID</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">po_id</div>
+                        <div class="field-type">String (Format: PO-DDMMYY-XXX)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">po_date</div>
+                        <div class="field-type">Timestamp</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">supplier_id <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Foreign Key &rarr; Supplier.id)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">distribution_method</div>
+                        <div class="field-type">Enum (pickup, delivery)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">warehouse_id <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Foreign Key &rarr; Warehouse.id)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">address</div>
+                        <div class="field-type">Text</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">required_date</div>
+                        <div class="field-type">Date</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">subtotal</div>
+                        <div class="field-type">Decimal(18,2)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">tax_option</div>
+                        <div class="field-type">Enum (no_tax, apply_tax), Default: no_tax</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">tax_percentage</div>
+                        <div class="field-type field-nullable">Decimal(5,2) (Nullable)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">tax_amount</div>
+                        <div class="field-type">Decimal(18,2)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">discount_type</div>
+                        <div class="field-type field-nullable">Enum (percentage, nominal), Nullable</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">discount_percentage</div>
+                        <div class="field-type field-nullable">Decimal(5,2) (Nullable)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">discount_amount</div>
+                        <div class="field-type field-nullable">Decimal(18,2) (Nullable)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">grand_total</div>
+                        <div class="field-type">Decimal(18,2)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">payment_method</div>
+                        <div class="field-type">Enum (advance_payment, payment_after_delivery, down_payment)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">paid_amount</div>
+                        <div class="field-type">Decimal(18,2), Default: 0</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">outstanding</div>
+                        <div class="field-type">Decimal(18,2)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">dp_percentage</div>
+                        <div class="field-type field-nullable">Decimal(5,2) (Nullable)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">dp_amount</div>
+                        <div class="field-type field-nullable">Decimal(18,2) (Nullable)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">notes</div>
+                        <div class="field-type field-nullable">Text (Nullable)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">delivery_date</div>
+                        <div class="field-type field-nullable">Date (Nullable)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">transfer_amount</div>
+                        <div class="field-type">Decimal(18,2), Default: 0</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">status</div>
+                        <div class="field-type">Enum (draft, submitted, cancelled, completed), Default: submitted</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">is_active</div>
+                        <div class="field-type">Boolean, Default: true</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">created_at</div>
+                        <div class="field-type">Timestamp</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">created_by <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Foreign Key &rarr; User.id)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">updated_at</div>
+                        <div class="field-type">Timestamp</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">updated_by <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Foreign Key &rarr; User.id)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PurchaseOrderLineItem -->
+            <div class="entity-card">
+                <div class="entity-header">
+                    <span>PurchaseOrderLineItem</span>
+                    <span class="source">PRD Section B.8.2</span>
+                </div>
+                <div class="entity-body">
+                    <div class="field-row">
+                        <div class="field-name">id <span class="constraint-badge">PK</span></div>
+                        <div class="field-type field-pk">UUID</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">po_id <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Foreign Key &rarr; PurchaseOrder.id)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">item_id <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Foreign Key &rarr; Item.id)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">quantity</div>
+                        <div class="field-type">Decimal(18,4)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">unit_price</div>
+                        <div class="field-type">Decimal(18,2)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">total_amount</div>
+                        <div class="field-type">Decimal(18,2)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">line_number</div>
+                        <div class="field-type">Integer</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">created_at</div>
+                        <div class="field-type">Timestamp</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">updated_at</div>
+                        <div class="field-type">Timestamp</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- POAttachment -->
+            <div class="entity-card">
+                <div class="entity-header">
+                    <span>POAttachment</span>
+                    <span class="source">PRD Section B.8.3</span>
+                </div>
+                <div class="entity-body">
+                    <div class="note-box">
+                        <strong>Relationship:</strong> One-to-One with PurchaseOrder (Max 1 attachment per PO)
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">id <span class="constraint-badge">PK</span></div>
+                        <div class="field-type field-pk">UUID</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">po_id <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Foreign Key &rarr; PurchaseOrder.id)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">file_path</div>
+                        <div class="field-type">String</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">file_name</div>
+                        <div class="field-type">String</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">file_type</div>
+                        <div class="field-type">String (MIME type)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">file_size</div>
+                        <div class="field-type">Integer (bytes)</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">uploaded_at</div>
+                        <div class="field-type">Timestamp</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-name">uploaded_by <span class="constraint-badge">FK</span></div>
+                        <div class="field-type field-fk">UUID (Foreign Key &rarr; User.id)</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Field Length Standards -->
+        <section id="field-lengths">
+            <h2>3. Field Length Standards (PRD Section A.14.2 & B.14)</h2>
+
+            <div class="section">
+                <h3>Master Data Field Lengths (PRD A.14.2)</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Entity</th>
+                            <th>Field</th>
+                            <th>Max Length</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Warehouse</td><td>node_id</td><td>10 chars</td></tr>
+                        <tr><td>Warehouse</td><td>name</td><td>100 chars</td></tr>
+                        <tr><td>Warehouse</td><td>address</td><td>500 chars</td></tr>
+                        <tr><td>Warehouse</td><td>description</td><td>1000 chars</td></tr>
+                        <tr><td>Supplier</td><td>supp_id</td><td>10 chars</td></tr>
+                        <tr><td>Supplier</td><td>name</td><td>100 chars</td></tr>
+                        <tr><td>Supplier</td><td>pic_name</td><td>100 chars</td></tr>
+                        <tr><td>Supplier</td><td>address</td><td>500 chars</td></tr>
+                        <tr><td>Supplier</td><td>phone</td><td>15 chars</td></tr>
+                        <tr><td>Supplier</td><td>description</td><td>1000 chars</td></tr>
+                        <tr><td>Item</td><td>sku</td><td>10 chars</td></tr>
+                        <tr><td>Item</td><td>brand</td><td>100 chars</td></tr>
+                        <tr><td>Item</td><td>name</td><td>200 chars</td></tr>
+                        <tr><td>Item</td><td>detail</td><td>1000 chars</td></tr>
+                        <tr><td>UOM</td><td>uom_id</td><td>10 chars</td></tr>
+                        <tr><td>UOM</td><td>code</td><td>10 chars</td></tr>
+                        <tr><td>UOM</td><td>name</td><td>50 chars</td></tr>
+                        <tr><td>UOM</td><td>description</td><td>500 chars</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <h3>PO Field Standards (PRD B.14)</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Data Type</th>
+                            <th>Precision</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>PO ID</td><td>String</td><td>Max 20 characters</td></tr>
+                        <tr><td>Supplier Name</td><td>String</td><td>Max 255 characters</td></tr>
+                        <tr><td>Address</td><td>Text</td><td>Max 500 characters</td></tr>
+                        <tr><td>Quantity</td><td>Decimal</td><td>(18,4)</td></tr>
+                        <tr><td>Unit Price</td><td>Decimal</td><td>(18,2)</td></tr>
+                        <tr><td>Total Amount</td><td>Decimal</td><td>(18,2)</td></tr>
+                        <tr><td>Subtotal</td><td>Decimal</td><td>(18,2)</td></tr>
+                        <tr><td>Tax Percentage</td><td>Decimal</td><td>(5,2) - Range: 0.00 to 100.00</td></tr>
+                        <tr><td>Tax Amount</td><td>Decimal</td><td>(18,2)</td></tr>
+                        <tr><td>Discount Percentage</td><td>Decimal</td><td>(5,2) - Range: 0.00 to 100.00</td></tr>
+                        <tr><td>Discount Amount</td><td>Decimal</td><td>(18,2)</td></tr>
+                        <tr><td>Grand Total</td><td>Decimal</td><td>(18,2)</td></tr>
+                        <tr><td>Paid Amount</td><td>Decimal</td><td>(18,2)</td></tr>
+                        <tr><td>Outstanding</td><td>Decimal</td><td>(18,2) - Calculated field</td></tr>
+                        <tr><td>DP Percentage</td><td>Decimal</td><td>(5,2) - Range: 0.00 to 100.00</td></tr>
+                        <tr><td>DP Amount</td><td>Decimal</td><td>(18,2)</td></tr>
+                        <tr><td>Transfer Amount</td><td>Decimal</td><td>(18,2)</td></tr>
+                        <tr><td>Remaining Amount</td><td>Decimal</td><td>(18,2) - Calculated field</td></tr>
+                        <tr><td>Timestamps</td><td>DateTime</td><td>ISO-8601 format</td></tr>
+                        <tr><td>Dates</td><td>Date</td><td>YYYY-MM-DD format (stored)</td></tr>
+                        <tr><td>Notes</td><td>Text</td><td>Max 2000 characters</td></tr>
+                        <tr><td>Document Path</td><td>String</td><td>Max 500 characters</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- General Data Types -->
+        <section id="data-types">
+            <h2>4. General Data Types (PRD Section A.14.1)</h2>
+            <div class="section">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Field Type</th>
+                            <th>Data Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Phone</td><td>String (8-15 chars)</td></tr>
+                        <tr><td>Prices</td><td>Decimal (18,2)</td></tr>
+                        <tr><td>Quantities</td><td>Decimal (18,4)</td></tr>
+                        <tr><td>Timestamps</td><td>ISO-8601</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Seed Data -->
+        <section id="seed-data">
+            <h2>5. Seed Data (PRD Section E.6)</h2>
+            <div class="section">
+                <h3>Default UOM Values</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>UOM ID</th>
+                            <th>Code</th>
+                            <th>Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>UOM001</td><td>Kg</td><td>Kilogram</td></tr>
+                        <tr><td>UOM002</td><td>Ltr</td><td>Liter</td></tr>
+                        <tr><td>UOM003</td><td>Pcs</td><td>Pieces</td></tr>
+                        <tr><td>UOM004</td><td>Box</td><td>Box</td></tr>
+                        <tr><td>UOM005</td><td>Pack</td><td>Pack</td></tr>
+                        <tr><td>UOM006</td><td>Unit</td><td>Unit</td></tr>
+                        <tr><td>UOM007</td><td>Set</td><td>Set</td></tr>
+                        <tr><td>UOM008</td><td>Dzn</td><td>Dozen</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Foreign Key Summary -->
+        <section id="fk-summary">
+            <h2>6. Foreign Key Summary (Extracted dari PRD)</h2>
+            <div class="section">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Entity</th>
+                            <th>Field</th>
+                            <th>References</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Warehouse</td><td>parent_id</td><td>Warehouse.id</td><td>Self-Ref, Nullable</td></tr>
+                        <tr><td>Warehouse</td><td>created_by</td><td>User.id</td><td>-</td></tr>
+                        <tr><td>Warehouse</td><td>updated_by</td><td>User.id</td><td>-</td></tr>
+                        <tr><td>Supplier</td><td>created_by</td><td>User.id</td><td>-</td></tr>
+                        <tr><td>Supplier</td><td>updated_by</td><td>User.id</td><td>-</td></tr>
+                        <tr><td>UOM</td><td>created_by</td><td>User.id</td><td>-</td></tr>
+                        <tr><td>UOM</td><td>updated_by</td><td>User.id</td><td>-</td></tr>
+                        <tr><td>Item</td><td>uom_id</td><td>UOM.id</td><td>-</td></tr>
+                        <tr><td>Item</td><td>created_by</td><td>User.id</td><td>-</td></tr>
+                        <tr><td>Item</td><td>updated_by</td><td>User.id</td><td>-</td></tr>
+                        <tr><td>Inventory</td><td>item_id</td><td>Item.id</td><td>-</td></tr>
+                        <tr><td>Inventory</td><td>warehouse_id</td><td>Warehouse.id</td><td>where node_type='Warehouse'</td></tr>
+                        <tr><td>Inventory</td><td>bin_id</td><td>Warehouse.id</td><td>where node_type='Bin', Nullable</td></tr>
+                        <tr><td>Inventory</td><td>last_po_id</td><td>PurchaseOrder.id</td><td>Nullable</td></tr>
+                        <tr><td>PurchaseOrder</td><td>supplier_id</td><td>Supplier.id</td><td>-</td></tr>
+                        <tr><td>PurchaseOrder</td><td>warehouse_id</td><td>Warehouse.id</td><td>-</td></tr>
+                        <tr><td>PurchaseOrder</td><td>created_by</td><td>User.id</td><td>-</td></tr>
+                        <tr><td>PurchaseOrder</td><td>updated_by</td><td>User.id</td><td>-</td></tr>
+                        <tr><td>PurchaseOrderLineItem</td><td>po_id</td><td>PurchaseOrder.id</td><td>-</td></tr>
+                        <tr><td>PurchaseOrderLineItem</td><td>item_id</td><td>Item.id</td><td>-</td></tr>
+                        <tr><td>POAttachment</td><td>po_id</td><td>PurchaseOrder.id</td><td>One-to-One</td></tr>
+                        <tr><td>POAttachment</td><td>uploaded_by</td><td>User.id</td><td>-</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Unique Constraints -->
+        <section id="constraints">
+            <h2>7. Unique Constraints (Extracted dari PRD)</h2>
+            <div class="section">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Entity</th>
+                            <th>Constraint</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Item</td><td>sku</td><td>A.8.3 "String (Unique)"</td></tr>
+                        <tr><td>Inventory</td><td>(item_id, warehouse_id, bin_id)</td><td>A.8.5 "Unique Constraint"</td></tr>
+                        <tr><td>POAttachment</td><td>po_id</td><td>B.8.3 "One-to-One with PurchaseOrder"</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p><strong>ERP Nimbus ERD</strong> - Version 1.0 | Based on PRD V6.1 | Generated: 02 February 2026</p>
+        <p>Principle: 1:1 dengan PRD - Tidak ada asumsi atau tambahan</p>
+    </footer>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            er: {
+                layoutDirection: 'TB',
+                minEntityWidth: 100,
+                minEntityHeight: 75,
+                entityPadding: 15
+            }
+        });
+    </script>
+</body>
+</html>
