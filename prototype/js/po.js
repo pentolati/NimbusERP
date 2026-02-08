@@ -11,6 +11,25 @@ const poPageSize = 10; // PRD B-FR-044: Default 10 records per page
 let poLineItems = [];
 let poFormData = {};
 
+// Render PO Create action buttons based on Workflow
+// Shows: ONLY Initial statuses (user picks starting status)
+// Transitions are shown in View mode AFTER PO is created
+function renderPoCreateActions() {
+    // Get ALL initial statuses for Purchase Order
+    const initialStatuses = getAllInitialStatuses('Purchase Order');
+
+    if (initialStatuses.length === 0) {
+        // Fallback if no workflow defined
+        return '<button type="button" class="btn btn-primary" onclick="submitPo()">Submit</button>';
+    }
+
+    // Create button for each Initial status
+    return initialStatuses.map(initStatus => {
+        const initLower = initStatus.toLowerCase();
+        return `<button type="button" class="btn btn-primary" onclick="submitPoWithStatus('${initLower}')">${initStatus}</button>`;
+    }).join(' ');
+}
+
 /* ===========================================
    PO List - PRD B.7.0
    UI Pattern: Data Table with Search/Filter
@@ -59,8 +78,8 @@ function renderPoTable() {
     const searchTerm = document.getElementById('poSearch')?.value || '';
     let pos = [...dataStore.purchaseOrder];
 
-    // Sort by PO Date newest first - PRD B-FR-043
-    pos.sort((a, b) => new Date(b.po_date) - new Date(a.po_date));
+    // Sort by Updated At newest first
+    pos.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
 
     // Filter - PRD B-FR-046: by PO ID and Supplier Name
     if (searchTerm) {
@@ -110,21 +129,44 @@ function renderPoTable() {
         const supplier = getById('supplier', po.supplier_id);
         // PRD B-FR-049: Remaining Amount = Grand Total - Transfer Amount
         const remainingAmount = (po.grand_total || 0) - (po.transfer_amount || 0);
+        const isFinal = isStatusFinal('Purchase Order', capitalizeStatus(po.status));
+
+        // Check overdue: required_date passed AND no delivery_date AND not Final status
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const reqDate = new Date(po.required_date);
+        reqDate.setHours(0, 0, 0, 0);
+        const isOverdue = !isFinal && !po.delivery_date && reqDate < today;
+        const overdueIcon = isOverdue ? ' <span class="badge badge-error" title="Overdue">Overdue</span>' : '';
+
+        // Delivery date display
+        const deliveryDisplay = po.delivery_date
+            ? formatDate(po.delivery_date)
+            : (isOverdue ? '<span style="color: var(--error);">-</span>' : '-');
 
         html += `
-            <tr>
-                <td class="col-id" onclick="navigateTo('po-view', {id: '${po.id}'})">${po.po_id}</td>
+            <tr${isOverdue ? ' style="background-color: var(--error-bg);"' : ''}>
+                <td class="col-id" onclick="navigateTo('po-view', {id: '${po.id}'})">${po.po_id}${overdueIcon}</td>
                 <td class="col-date">${formatDate(po.po_date)}</td>
                 <td class="col-name">${supplier ? escapeHtml(supplier.name) : '-'}</td>
                 <td class="col-date">${formatDate(po.required_date)}</td>
-                <td class="col-date">${po.delivery_date ? formatDate(po.delivery_date) : '-'}</td>
+                <td class="col-date">${deliveryDisplay}</td>
                 <td class="col-currency">${formatCurrency(po.grand_total)}</td>
                 <td class="col-currency">${formatCurrency(po.transfer_amount || 0)}</td>
                 <td class="col-currency">${formatCurrency(remainingAmount)}</td>
                 <td>${getStatusBadge(po.status)}</td>
                 <td class="col-date">${formatDateTime(po.updated_at)}</td>
                 <td class="col-action">
-                    <button class="btn btn-secondary btn-sm" onclick="navigateTo('po-view', {id: '${po.id}'})">View</button>
+                    <div class="dropdown">
+                        <button class="btn btn-secondary btn-sm btn-icon" onclick="togglePoMenu('${po.id}', event)">&#8942;</button>
+                        <div class="dropdown-menu" id="poMenu_${po.id}">
+                            <a href="#" class="dropdown-item" onclick="event.preventDefault(); closeAllDropdowns(); navigateTo('po-view', {id: '${po.id}'})">View Detail</a>
+                            <a href="#" class="dropdown-item" onclick="event.preventDefault(); closeAllDropdowns(); showStatusHistoryModal('${po.id}')">View History</a>
+                            ${!isFinal ? `<a href="#" class="dropdown-item" onclick="event.preventDefault(); closeAllDropdowns(); showChangeStatusModal('${po.id}')">Change Status</a>` : ''}
+                            ${remainingAmount > 0 ? `<a href="#" class="dropdown-item" onclick="event.preventDefault(); closeAllDropdowns(); showPayRemainingModal('${po.id}', ${remainingAmount})">Pay Remaining</a>` : ''}
+                            ${isFinal && !po.delivery_date ? `<a href="#" class="dropdown-item" onclick="event.preventDefault(); closeAllDropdowns(); flagAsDelivered('${po.id}')">Flag as Delivered</a>` : ''}
+                        </div>
+                    </div>
                 </td>
             </tr>
         `;
@@ -460,9 +502,9 @@ function renderPoCreate() {
                     <span class="po-summary-value" id="summary_outstanding">Rp 0</span>
                 </div>
 
-                <!-- Action Buttons - PRD B-FR-030 -->
+                <!-- Action Buttons - Based on Workflow Transitions from Initial Status -->
                 <div class="po-summary-actions">
-                    <button type="button" class="btn btn-primary" onclick="submitPo()">Submit</button>
+                    ${renderPoCreateActions()}
                     <button type="button" class="btn btn-secondary" onclick="confirmBackPo()">Back</button>
                 </div>
             </div>
@@ -698,7 +740,13 @@ function onPaymentMethodChange() {
 
     dpFieldsRow.style.display = 'none';
 
-    if (paymentMethod === 'payment_after_delivery') {
+    if (paymentMethod === 'advance_payment') {
+        // Advance Payment: Auto-fill with Grand Total, disabled
+        const grandTotal = parseFloat(document.getElementById('summary_grand_total').textContent.replace(/[^\d]/g, '')) || 0;
+        paidAmountInput.value = grandTotal;
+        paidAmountInput.readOnly = true;
+        paidAmountInput.classList.add('readonly');
+    } else if (paymentMethod === 'payment_after_delivery') {
         // PRD B-FR-025c: Auto-fill 0, read-only
         paidAmountInput.value = 0;
         paidAmountInput.readOnly = true;
@@ -852,8 +900,13 @@ function confirmBackPo() {
     });
 }
 
+// Submit PO with specific status (from workflow)
+function submitPoWithStatus(status) {
+    submitPo(status);
+}
+
 // Submit PO - PRD B-FR-031
-function submitPo() {
+function submitPo(targetStatus = 'submitted') {
     const errors = [];
 
     // Get form values
@@ -976,12 +1029,23 @@ function submitPo() {
         dp_amount: paymentMethod === 'down_payment' && dpAmount > 0 ? dpAmount : null,
         notes: notes || null,
         delivery_date: null, // PRD B.8.1 Note: defaults to null in Phase 1
-        transfer_amount: 0, // PRD B.8.1 Note: defaults to 0 in Phase 1
-        status: 'submitted', // PRD B-FR-031: status = "Submitted"
+        transfer_amount: paymentMethod === 'advance_payment' ? grandTotal : (paymentMethod === 'down_payment' ? dpAmount : 0),
+        status: targetStatus, // Status from workflow transition
         is_active: true
     };
 
     const savedPo = addRecord('purchaseOrder', po);
+
+    // Log initial status
+    dataStore.poStatusLog.push({
+        id: generateUUID(),
+        po_id: savedPo.id,
+        from_status: null,
+        to_status: capitalizeStatus(targetStatus),
+        changed_by: currentUser.id,
+        changed_at: getCurrentTimestamp(),
+        comment: 'Initial creation'
+    });
 
     // Create line items - PRD B.8.2
     validItems.forEach((item, index) => {
@@ -997,7 +1061,8 @@ function submitPo() {
     });
 
     // Show success toast - PRD B-FR-036
-    showToast('success', 'Success', `Purchase Order ${poId} submitted successfully`);
+    const statusDisplay = targetStatus.charAt(0).toUpperCase() + targetStatus.slice(1);
+    showToast('success', 'Success', `Purchase Order ${poId} ${statusDisplay} successfully`);
 
     // Redirect to PO List - PRD B-FR-038
     navigateTo('po-list');
@@ -1020,11 +1085,34 @@ function renderPoView(params) {
     const warehouse = getById('warehouse', po.warehouse_id);
     const lineItems = dataStore.purchaseOrderLineItem.filter(li => li.po_id === po.id);
 
+    // Check if current status is FINAL (no more transitions, PO locked)
+    const isFinalStatus = isStatusFinal('Purchase Order', capitalizeStatus(po.status));
+
+    let actionButtons = '';
+
+    if (!isFinalStatus) {
+        // Generate action buttons based on WORKFLOW transitions
+        const userRoleIds = getUserRoleIds(currentUser.id);
+        const transitions = getAvailableTransitions('Purchase Order', capitalizeStatus(po.status), userRoleIds);
+
+        transitions.forEach(t => {
+            // Determine button style based on to_status (danger for Cancel/Reject, primary for others)
+            const isDanger = t.to_status.toLowerCase() === 'cancelled' || t.to_status.toLowerCase() === 'rejected';
+            const btnClass = isDanger ? 'btn-danger' : 'btn-primary';
+            actionButtons += `<button class="btn ${btnClass}" onclick="executeTransition('${po.id}', '${t.to_status}')">${t.to_status}</button> `;
+        });
+    }
+    // If Final status: no action buttons (PO is locked)
+
+    // Show Final indicator if status is Final (no more status changes possible)
+    const finalBadge = isFinalStatus ? '<span class="badge badge-warning" style="margin-left: 12px;">Final</span>' : '';
+
     mainContent.innerHTML = `
         <!-- Page Header -->
         <div class="page-header">
-            <h1 class="page-title">View Purchase Order</h1>
+            <h1 class="page-title">View Purchase Order ${finalBadge}</h1>
             <div class="page-actions">
+                ${actionButtons}
                 <!-- PRD B-FR-039, B-FR-040: Print and Download buttons in View mode -->
                 <button class="btn btn-secondary" onclick="printPo('${po.id}')">&#128424; Print PO</button>
                 <button class="btn btn-secondary" onclick="downloadPoPdf('${po.id}')">&#128229; Download PDF</button>
@@ -1082,6 +1170,78 @@ function renderPoView(params) {
                             <label class="form-label">Status</label>
                             ${getStatusBadge(po.status)}
                         </div>
+
+                        ${po.status === 'rejected' && po.rejection_reason ? `
+                        <div class="form-group">
+                            <label class="form-label">Rejection Reason</label>
+                            <div style="background: var(--error-bg); padding: var(--space-3); border-radius: var(--radius-md); color: var(--error);">
+                                ${escapeHtml(po.rejection_reason)}
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Rejected At</label>
+                                <input type="text" class="form-input" value="${formatDateTime(po.rejected_at)}" readonly disabled>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Rejected By</label>
+                                <input type="text" class="form-input" value="${currentUser.full_name}" readonly disabled>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        ${po.status === 'cancelled' && po.cancellation_reason ? `
+                        <div class="form-group">
+                            <label class="form-label">Cancellation Reason</label>
+                            <div style="background: var(--error-bg); padding: var(--space-3); border-radius: var(--radius-md); color: var(--error);">
+                                ${escapeHtml(po.cancellation_reason)}
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Cancelled At</label>
+                                <input type="text" class="form-input" value="${formatDateTime(po.cancelled_at)}" readonly disabled>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Cancelled By</label>
+                                <input type="text" class="form-input" value="${currentUser.full_name}" readonly disabled>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        ${po.status === 'approved' ? `
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Approved At</label>
+                                <input type="text" class="form-input" value="${formatDateTime(po.approved_at)}" readonly disabled>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Approved By</label>
+                                <input type="text" class="form-input" value="${currentUser.full_name}" readonly disabled>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        ${po.status === 'completed' ? `
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Completed At</label>
+                                <input type="text" class="form-input" value="${formatDateTime(po.completed_at)}" readonly disabled>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Invoice Number</label>
+                                <input type="text" class="form-input" value="${po.invoice_number || '-'}" readonly disabled>
+                            </div>
+                        </div>
+                        ${po.completion_notes ? `
+                        <div class="form-group">
+                            <label class="form-label">Completion Notes</label>
+                            <div style="background: var(--success-bg); padding: var(--space-3); border-radius: var(--radius-md); color: var(--success);">
+                                ${escapeHtml(po.completion_notes)}
+                            </div>
+                        </div>
+                        ` : ''}
+                        ` : ''}
                     </div>
                 </div>
 
@@ -1154,7 +1314,7 @@ function renderPoView(params) {
                                 <input type="text" class="form-input" value="${formatPaymentMethod(po.payment_method)}" readonly disabled>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Paid Amount</label>
+                                <label class="form-label">Initial Paid Amount</label>
                                 <input type="text" class="form-input" value="${formatCurrency(po.paid_amount)}" readonly disabled>
                             </div>
                         </div>
@@ -1196,12 +1356,12 @@ function renderPoView(params) {
                 <div class="divider"></div>
 
                 <div class="po-summary-row">
-                    <span class="po-summary-label">Paid Amount</span>
-                    <span class="po-summary-value">${formatCurrency(po.paid_amount)}</span>
+                    <span class="po-summary-label">Transfer Amount</span>
+                    <span class="po-summary-value">${formatCurrency(po.transfer_amount || 0)}</span>
                 </div>
                 <div class="po-summary-row">
-                    <span class="po-summary-label">Outstanding</span>
-                    <span class="po-summary-value">${formatCurrency(po.outstanding)}</span>
+                    <span class="po-summary-label">Remaining Amount</span>
+                    <span class="po-summary-value">${formatCurrency((po.grand_total || 0) - (po.transfer_amount || 0))}</span>
                 </div>
 
                 <div class="divider"></div>
@@ -1233,4 +1393,508 @@ function printPo(poId) {
 // Download PO PDF - PRD B-FR-040
 function downloadPoPdf(poId) {
     showToast('info', 'Info', 'Download PDF functionality - would generate PDF');
+}
+
+/* ===========================================
+   PO Workflow Actions - Integrated with Workflow Engine
+   =========================================== */
+
+// Helper: Capitalize status (draft -> Draft) for workflow matching
+function capitalizeStatus(status) {
+    if (!status) return '';
+    return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+}
+
+// Execute workflow transition (generic)
+function executeTransition(poId, toStatus) {
+    const statusLower = toStatus.toLowerCase();
+    const statusDisplay = toStatus;
+
+    showConfirmModal(`Are you sure you want to change status to "${statusDisplay}"?`, () => {
+        const po = getById('purchaseOrder', poId);
+        if (po) {
+            const now = getCurrentTimestamp();
+            const oldStatus = capitalizeStatus(po.status);
+
+            // Log status change
+            dataStore.poStatusLog.push({
+                id: generateUUID(),
+                po_id: poId,
+                from_status: oldStatus,
+                to_status: toStatus,
+                changed_by: currentUser.id,
+                changed_at: now,
+                comment: 'Status transition'
+            });
+
+            po.status = statusLower;
+            po.updated_at = now;
+            po.updated_by = currentUser.id;
+
+            // Set specific timestamps based on status
+            if (statusLower === 'submitted') {
+                po.submitted_at = now;
+                po.submitted_by = currentUser.id;
+            } else if (statusLower === 'approved') {
+                po.approved_at = now;
+                po.approved_by = currentUser.id;
+            }
+
+            showToast('success', 'Success', `PO ${po.po_id} status changed to ${statusDisplay}`);
+            renderPoView({ id: poId });
+        }
+    });
+}
+
+// Approve PO (legacy, now uses executeTransition)
+function approvePo(poId) {
+    showConfirmModal('Are you sure you want to approve this Purchase Order?', () => {
+        const po = getById('purchaseOrder', poId);
+        if (po) {
+            po.status = 'approved';
+            po.approved_at = getCurrentTimestamp();
+            po.approved_by = currentUser.id;
+            po.updated_at = getCurrentTimestamp();
+            po.updated_by = currentUser.id;
+
+            showToast('success', 'Success', `PO ${po.po_id} has been approved`);
+            renderPoView({ id: poId });
+        }
+    });
+}
+
+// Submit Draft PO - PRD B.18.2
+function submitDraftPo(poId) {
+    showConfirmModal('Are you sure you want to submit this Purchase Order?', () => {
+        const po = getById('purchaseOrder', poId);
+        if (po) {
+            po.status = 'submitted';
+            po.submitted_at = getCurrentTimestamp();
+            po.submitted_by = currentUser.id;
+            po.updated_at = getCurrentTimestamp();
+            po.updated_by = currentUser.id;
+
+            showToast('success', 'Success', `PO ${po.po_id} has been submitted for approval`);
+            renderPoView({ id: poId });
+        }
+    });
+}
+
+// Show Reject Modal - PRD B.18.2
+function showRejectModal(poId) {
+    const modal = document.getElementById('confirmModal');
+    const messageEl = document.getElementById('confirmMessage');
+    const yesBtn = document.getElementById('confirmYesBtn');
+
+    messageEl.innerHTML = `
+        <div style="text-align: left;">
+            <p style="margin-bottom: var(--space-3);">Are you sure you want to reject this Purchase Order?</p>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label required">Rejection Reason</label>
+                <textarea class="form-textarea" id="rejectionReason" placeholder="Enter reason for rejection..." maxlength="500" required style="width: 100%;"></textarea>
+            </div>
+        </div>
+    `;
+
+    // Update button text
+    yesBtn.textContent = 'Reject';
+    yesBtn.className = 'btn btn-danger';
+
+    // Remove old listener and add new one
+    const newYesBtn = yesBtn.cloneNode(true);
+    yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
+
+    newYesBtn.addEventListener('click', () => {
+        const reason = document.getElementById('rejectionReason').value.trim();
+        if (!reason) {
+            showValidationModal(['Rejection reason is required']);
+            return;
+        }
+
+        const po = getById('purchaseOrder', poId);
+        if (po) {
+            po.status = 'rejected';
+            po.rejected_at = getCurrentTimestamp();
+            po.rejected_by = currentUser.id;
+            po.rejection_reason = reason;
+            po.updated_at = getCurrentTimestamp();
+            po.updated_by = currentUser.id;
+
+            closeConfirmModal();
+            showToast('success', 'Success', `PO ${po.po_id} has been rejected`);
+            renderPoView({ id: poId });
+        }
+    });
+
+    modal.classList.add('active');
+}
+
+// Show Cancel Modal - PRD B.18.2
+function showCancelModal(poId) {
+    const modal = document.getElementById('confirmModal');
+    const messageEl = document.getElementById('confirmMessage');
+    const yesBtn = document.getElementById('confirmYesBtn');
+
+    messageEl.innerHTML = `
+        <div style="text-align: left;">
+            <p style="margin-bottom: var(--space-3);">Are you sure you want to cancel this Purchase Order?</p>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label required">Cancellation Reason</label>
+                <textarea class="form-textarea" id="cancellationReason" placeholder="Enter reason for cancellation..." maxlength="500" required style="width: 100%;"></textarea>
+            </div>
+        </div>
+    `;
+
+    // Update button text
+    yesBtn.textContent = 'Cancel PO';
+    yesBtn.className = 'btn btn-danger';
+
+    // Remove old listener and add new one
+    const newYesBtn = yesBtn.cloneNode(true);
+    yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
+
+    newYesBtn.addEventListener('click', () => {
+        const reason = document.getElementById('cancellationReason').value.trim();
+        if (!reason) {
+            showValidationModal(['Cancellation reason is required']);
+            return;
+        }
+
+        const po = getById('purchaseOrder', poId);
+        if (po) {
+            po.status = 'cancelled';
+            po.cancelled_at = getCurrentTimestamp();
+            po.cancelled_by = currentUser.id;
+            po.cancellation_reason = reason;
+            po.updated_at = getCurrentTimestamp();
+            po.updated_by = currentUser.id;
+
+            closeConfirmModal();
+            showToast('success', 'Success', `PO ${po.po_id} has been cancelled`);
+            renderPoView({ id: poId });
+        }
+    });
+
+    modal.classList.add('active');
+}
+
+/* ===========================================
+   Three-Dots Menu Functions
+   =========================================== */
+
+// Close all dropdown menus
+function closeAllDropdowns() {
+    document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+        menu.classList.remove('show');
+    });
+}
+
+// Toggle PO dropdown menu
+function togglePoMenu(poId, event) {
+    if (event) {
+        event.stopPropagation();
+    }
+
+    // Close all other menus first
+    document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+        menu.classList.remove('show');
+    });
+
+    const menu = document.getElementById(`poMenu_${poId}`);
+    if (menu) {
+        menu.classList.toggle('show');
+    }
+
+    // Close menu when clicking outside
+    setTimeout(() => {
+        document.addEventListener('click', function closeMenu(e) {
+            if (!e.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+                document.removeEventListener('click', closeMenu);
+            }
+        });
+    }, 10);
+}
+
+// Validate comment field inline
+function validateCommentField(field) {
+    const errorDiv = document.getElementById('commentError');
+    if (field.value.trim()) {
+        field.style.borderColor = '';
+        if (errorDiv) errorDiv.style.display = 'none';
+    } else {
+        field.style.borderColor = 'var(--error)';
+        if (errorDiv) errorDiv.style.display = 'block';
+    }
+}
+
+// Validate payment amount inline
+function validatePaymentAmount(field, maxAmount) {
+    const errorDiv = document.getElementById('paymentAmountError');
+    const amount = parseFloat(field.value) || 0;
+
+    if (amount <= 0) {
+        field.style.borderColor = 'var(--error)';
+        if (errorDiv) {
+            errorDiv.textContent = 'Payment amount must be greater than 0';
+            errorDiv.style.display = 'block';
+        }
+    } else if (amount > maxAmount) {
+        field.style.borderColor = 'var(--error)';
+        if (errorDiv) {
+            errorDiv.textContent = `Payment amount cannot exceed ${formatCurrency(maxAmount)}`;
+            errorDiv.style.display = 'block';
+        }
+    } else {
+        field.style.borderColor = '';
+        if (errorDiv) errorDiv.style.display = 'none';
+    }
+}
+
+// Show Status History Modal
+function showStatusHistoryModal(poId) {
+    const po = getById('purchaseOrder', poId);
+    if (!po) return;
+
+    // Sort by changed_at descending (newest first)
+    const logs = dataStore.poStatusLog
+        .filter(log => log.po_id === poId)
+        .sort((a, b) => new Date(b.changed_at) - new Date(a.changed_at));
+
+    let historyHtml = '';
+    if (logs.length === 0) {
+        historyHtml = '<p style="color: var(--text-tertiary); text-align: center;">No status changes recorded</p>';
+    } else {
+        historyHtml = '<table class="data-table"><thead><tr><th>Date</th><th>From</th><th>To</th><th>By</th><th>Comment</th></tr></thead><tbody>';
+        logs.forEach(log => {
+            const user = dataStore.user.find(u => u.id === log.changed_by) || { name: 'System' };
+            historyHtml += `
+                <tr>
+                    <td>${formatDateTime(log.changed_at)}</td>
+                    <td>${log.from_status || '-'}</td>
+                    <td><strong>${log.to_status}</strong></td>
+                    <td>${user.name}</td>
+                    <td>${log.comment || '-'}</td>
+                </tr>
+            `;
+        });
+        historyHtml += '</tbody></table>';
+    }
+
+    const modal = document.getElementById('confirmModal');
+    const messageEl = document.getElementById('confirmMessage');
+    const yesBtn = document.getElementById('confirmYesBtn');
+    const noBtn = document.querySelector('#confirmModal .btn-secondary');
+
+    messageEl.innerHTML = `
+        <div style="text-align: left;">
+            <h4 style="margin-bottom: var(--space-3);">Status History - ${po.po_id}</h4>
+            <div style="max-height: 300px; overflow-y: auto;">
+                ${historyHtml}
+            </div>
+        </div>
+    `;
+
+    yesBtn.style.display = 'none';
+    noBtn.textContent = 'Close';
+
+    modal.classList.add('active');
+}
+
+// Show Change Status Modal
+function showChangeStatusModal(poId) {
+    const po = getById('purchaseOrder', poId);
+    if (!po) return;
+
+    const userRoleIds = getUserRoleIds(currentUser.id);
+    const currentStatus = po.status;
+    const transitions = getAvailableTransitions('Purchase Order', currentStatus, userRoleIds);
+
+    // Debug: show what we're checking
+    console.log('DEBUG Change Status:', {
+        poStatus: currentStatus,
+        userRoleIds: userRoleIds,
+        allTransitions: dataStore.workflowTransition.filter(t => t.document_type === 'Purchase Order'),
+        matchingTransitions: transitions
+    });
+
+    if (transitions.length === 0) {
+        showValidationModal([`No status transitions available for current status "${currentStatus}". Check console for debug info.`]);
+        return;
+    }
+
+    const transitionOptions = transitions.map(t =>
+        `<option value="${t.to_status}">${t.to_status}</option>`
+    ).join('');
+
+    const modal = document.getElementById('confirmModal');
+    const messageEl = document.getElementById('confirmMessage');
+    const yesBtn = document.getElementById('confirmYesBtn');
+
+    messageEl.innerHTML = `
+        <div style="text-align: left;">
+            <p style="margin-bottom: var(--space-3);">Change status of <strong>${po.po_id}</strong></p>
+            <p style="margin-bottom: var(--space-3);">Current Status: <span class="badge badge-info">${capitalizeStatus(po.status)}</span></p>
+            <div class="form-group">
+                <label class="form-label required">New Status</label>
+                <select class="form-input" id="newStatusSelect">
+                    ${transitionOptions}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label required">Comment</label>
+                <textarea class="form-textarea" id="statusChangeComment" placeholder="Reason for status change..."
+                    oninput="validateCommentField(this)"></textarea>
+                <div id="commentError" class="form-error" style="display: none; color: var(--error); font-size: var(--text-sm); margin-top: 4px;">Comment is required</div>
+            </div>
+        </div>
+    `;
+
+    yesBtn.textContent = 'Change Status';
+    yesBtn.className = 'btn btn-primary';
+    yesBtn.style.display = '';
+
+    const newYesBtn = yesBtn.cloneNode(true);
+    yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
+
+    newYesBtn.addEventListener('click', () => {
+        const newStatus = document.getElementById('newStatusSelect').value;
+        const commentField = document.getElementById('statusChangeComment');
+        const comment = commentField.value.trim();
+
+        if (!comment) {
+            commentField.style.borderColor = 'var(--error)';
+            document.getElementById('commentError').style.display = 'block';
+            commentField.focus();
+            return;
+        }
+
+        const now = getCurrentTimestamp();
+        const oldStatus = po.status;
+
+        // Log status change
+        dataStore.poStatusLog.push({
+            id: generateUUID(),
+            po_id: poId,
+            from_status: capitalizeStatus(oldStatus),
+            to_status: newStatus,
+            changed_by: currentUser.id,
+            changed_at: now,
+            comment: comment
+        });
+
+        // Update PO status
+        po.status = newStatus.toLowerCase();
+        po.updated_at = now;
+        po.updated_by = currentUser.id;
+
+        closeConfirmModal();
+        showToast('success', 'Success', `Status changed to ${newStatus}`);
+        renderPoList();
+    });
+
+    modal.classList.add('active');
+}
+
+// Show Pay Remaining Modal
+function showPayRemainingModal(poId, maxAmount) {
+    const po = getById('purchaseOrder', poId);
+    if (!po) return;
+
+    const modal = document.getElementById('confirmModal');
+    const messageEl = document.getElementById('confirmMessage');
+    const yesBtn = document.getElementById('confirmYesBtn');
+
+    messageEl.innerHTML = `
+        <div style="text-align: left;">
+            <p style="margin-bottom: var(--space-3);">Pay Remaining for <strong>${po.po_id}</strong></p>
+            <p style="margin-bottom: var(--space-3);">Remaining Amount: <strong>${formatCurrency(maxAmount)}</strong></p>
+            <div class="form-group">
+                <label class="form-label required">Payment Amount</label>
+                <input type="number" class="form-input" id="paymentAmountInput"
+                       min="1" max="${maxAmount}" value="${maxAmount}"
+                       placeholder="Enter payment amount"
+                       oninput="validatePaymentAmount(this, ${maxAmount})">
+                <div class="form-hint">Maximum: ${formatCurrency(maxAmount)}</div>
+                <div id="paymentAmountError" class="form-error" style="display: none; color: var(--error); font-size: var(--text-sm); margin-top: 4px;"></div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Payment Note</label>
+                <input type="text" class="form-input" id="paymentNoteInput" placeholder="e.g., Bank Transfer #123">
+            </div>
+        </div>
+    `;
+
+    yesBtn.textContent = 'Pay';
+    yesBtn.className = 'btn btn-primary';
+    yesBtn.style.display = '';
+
+    const newYesBtn = yesBtn.cloneNode(true);
+    yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
+
+    newYesBtn.addEventListener('click', () => {
+        const amountField = document.getElementById('paymentAmountInput');
+        const amount = parseFloat(amountField.value) || 0;
+        const note = document.getElementById('paymentNoteInput').value.trim();
+        const errorDiv = document.getElementById('paymentAmountError');
+
+        if (amount <= 0) {
+            amountField.style.borderColor = 'var(--error)';
+            errorDiv.textContent = 'Payment amount must be greater than 0';
+            errorDiv.style.display = 'block';
+            amountField.focus();
+            return;
+        }
+
+        if (amount > maxAmount) {
+            amountField.style.borderColor = 'var(--error)';
+            errorDiv.textContent = `Payment amount cannot exceed ${formatCurrency(maxAmount)}`;
+            errorDiv.style.display = 'block';
+            amountField.focus();
+            return;
+        }
+
+        const now = getCurrentTimestamp();
+
+        // Log payment
+        dataStore.poPaymentLog.push({
+            id: generateUUID(),
+            po_id: poId,
+            amount: amount,
+            paid_by: currentUser.id,
+            paid_at: now,
+            note: note
+        });
+
+        // Update transfer amount
+        po.transfer_amount = (po.transfer_amount || 0) + amount;
+        po.updated_at = now;
+        po.updated_by = currentUser.id;
+
+        closeConfirmModal();
+        showToast('success', 'Success', `Payment of ${formatCurrency(amount)} recorded`);
+        renderPoList();
+    });
+
+    modal.classList.add('active');
+}
+
+// Flag PO as Delivered - set delivery_date to today
+function flagAsDelivered(poId) {
+    const po = getById('purchaseOrder', poId);
+    if (!po) return;
+
+    showConfirmModal(`Mark ${po.po_id} as delivered? This will set the delivery date to today.`, () => {
+        const now = getCurrentTimestamp();
+        const today = new Date().toISOString().split('T')[0];
+
+        po.delivery_date = today;
+        po.updated_at = now;
+        po.updated_by = currentUser.id;
+
+        showToast('success', 'Success', `${po.po_id} marked as delivered`);
+        renderPoList();
+    });
 }

@@ -222,6 +222,20 @@ function showConfirmModal(message, onConfirm) {
 function closeConfirmModal() {
     const modal = document.getElementById('confirmModal');
     modal.classList.remove('active');
+
+    // Reset yes button state
+    const yesBtn = document.getElementById('confirmYesBtn');
+    if (yesBtn) {
+        yesBtn.style.display = '';
+        yesBtn.textContent = 'Yes';
+        yesBtn.className = 'btn btn-primary';
+    }
+
+    // Reset no button state
+    const noBtn = document.querySelector('#confirmModal .btn-secondary');
+    if (noBtn) {
+        noBtn.textContent = 'No';
+    }
 }
 
 /* ===========================================
@@ -318,7 +332,9 @@ function getStatusBadge(status) {
         'submitted': 'badge-submitted',
         'completed': 'badge-completed',
         'cancelled': 'badge-cancelled',
-        'draft': 'badge-neutral'
+        'approved': 'badge-approved',
+        'rejected': 'badge-rejected',
+        'draft': 'badge-draft'
     };
 
     const badgeClass = statusMap[status] || 'badge-neutral';
@@ -336,4 +352,12 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+/* ===========================================
+   Validation Error Helper
+   =========================================== */
+
+function showValidationError(message) {
+    showValidationModal([message]);
 }

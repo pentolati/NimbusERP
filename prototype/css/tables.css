@@ -8,7 +8,7 @@
     background: var(--bg-surface);
     border: 1px solid var(--border-default);
     border-radius: var(--radius-lg);
-    overflow: hidden;
+    overflow: visible;
 }
 
 /* Table Header - Search/Filter controls - PRD D.3.1 */
@@ -137,6 +137,17 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background: var(--bg-surface);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+/* Ensure dropdown in table is visible */
+.data-table {
+    overflow: visible;
+}
+
+.data-table tbody {
+    overflow: visible;
 }
 
 .table-info {

@@ -16,7 +16,13 @@ const pageRenderers = {
     'inventory-list': renderInventoryList,
     'po-list': renderPoList,
     'po-create': renderPoCreate,
-    'po-view': renderPoView
+    'po-view': renderPoView,
+    // Part U: User Management & RBAC
+    'user-list': renderUserList,
+    'functional-role-list': renderFunctionalRoleList,
+    // Part W: Workflow Management (Simplified)
+    'document-status-list': renderDocumentStatusList,
+    'workflow-list': renderWorkflowList
 };
 
 // Navigate to page - PRD D-NAV-001, D-NAV-002
